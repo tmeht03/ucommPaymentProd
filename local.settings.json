@@ -1,0 +1,15 @@
+{
+    "IsEncrypted": false,
+    "Values": {
+      "AzureWebJobsStorage": "DefaultEndpointsProtocol=https;AccountName=onetouchfuel;AccountKey=wf8NYB7N/0b7pAbAG+sjzz8VvyO93c2c2bVbYBFnoNIxc7+h8RDQDam0yEtVCPVpGIehinfeTxE11oH6fZEYLg==;EndpointSuffix=core.windows.net",
+     "MONGODB_CONNECTION": "mongodb://ucomm-payment-dev:C9YZ2sXAa1rWh3DjbOiOvxFkyLOXEKuCt8cUykuyceoiELvq0AOpBSpPDY6bpUhSpGduuS5M76tb9TuXSEXwRw==@ucomm-payment-dev.documents.azure.com:10255/?ssl=true&replicaSet=globaldb",
+      "GET_PROFILE_URL": "https://www.safeway.com/iass/service/profile",
+      "FD_KEY": "RBTnQcmj3ttwAQZpxLOVGEki5mDRU1es",
+      "FD_SECRET": "pX3yGenRGNDSUWTl",
+      "FD_BASEURL": "api-int.payeezy.com",
+      "FUNCTIONS_WORKER_RUNTIME": "node"
+    },
+    "Host": {
+      "LocalHttpPort": 7071
+    }
+  }
