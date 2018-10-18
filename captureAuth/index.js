@@ -8,7 +8,7 @@ const sendError = require('../middleware/sendError');
 const key = process.env.FD_KEY;
 const secret = process.env.FD_SECRET;
 const fdBaseUrl = process.env.FD_BASEURL;
-
+//added comment
 const captureAuthPayment = (context, body) => {
 
   const pumpNumber = body.pumpNumber,
