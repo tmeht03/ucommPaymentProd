@@ -20,7 +20,7 @@ const getFdCustomerId = (context, body) => {
           ack: '1',
           errors: [{
             code: '4004',
-            message: 'fdCustomerId mapping not found in Azure DB',
+            message: 'No card was ever registered for this user',
             type: 'Mongo DB error',
             category: 'generic_error',
             vendor: 'OTF Backend'
@@ -245,15 +245,8 @@ module.exports = function (context, req) {
   }
   context.log('getAllAccounts log- req.body.GUID', req.body.GUID);
 
-  if (req.headers.swy_sso_token) {
-    if (process.env.SSO_VALIDATION) {
-      validateSwySsoToken(context, req, getFdCustomerId.bind(null, context, req.body));
-    } else {
-      getFdCustomerId(context, req.body);
-    }
-  } else if (process.env.OKTA_VALIDATION) {
-    validateAccessToken(context, req, getFdCustomerId.bind(null, context, req.body));
-  } else {
-    getFdCustomerId(context, req.body);
-  }
+  context.log('Input: ', req.body.GUID);
+  //validateSwySsoToken(context, req, getFdCustomerId.bind(null, context, req.body.GUID));
+  getFdCustomerId(context, req.body);
 };
+

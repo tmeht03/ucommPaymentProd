@@ -1,6 +1,5 @@
 'use strict';
 require('../config/db');
-const counter = require('../models/counter');
 const CustomerId = require('../models/CustomerId');
 const Transaction = require('../models/Transaction')
 const CryptoJS = require('crypto-js');
@@ -18,31 +17,25 @@ const getFdCustId = (context, body) => {
     .findOne({ "GUID": GUID })
     .then(customer => {
       if (customer === null) {
-        const errorbody = {
-          message: 'Customer not found in OTF-DB'
-        };
-        context.log('salesTransaction log- Customer not present');
-        context.res = {
-          status: 400,
-          body: errorbody
-        };
+        context.log('salesTransaction log- Customer not present in Azure DB');
         const updates = {
           fdTransactionId: 'DB - fdCustomer not present'
         };
-        Transaction.findOneAndUpdate({ txnId: body.txnId }, updates, { new: true })
+        Transaction.findOneAndUpdate({ orderId: body.orderId }, updates, { new: true })
           .then(res => {
+            const outputBody = {
+              ack: '1',
+              errors: [{
+                code: '50000',
+                message: 'Customer not found in OTF-DB',
+                type: 'Backend error',
+                category: 'generic_error',
+                vendor: 'Ucomm Backend'
+              }]
+            }
             context.res = {
               status: 200,
-              body: {
-                ack: '1',
-                errors: [{
-                  code: 5000,
-                  message: 'Error finding FD customer mapping in Azure DB',
-                  type: 'Mongo DB error',
-                  vendor: 'Ucomm Backend',
-                  category: 'generic_error'
-                }]
-              }
+              body: outputBody
             };
             context.done();
           }).catch(err => {
@@ -58,7 +51,7 @@ const getFdCustId = (context, body) => {
                   category: 'generic_error'
                 }, {
                   code: 5000,
-                  message: 'Error updating txn info with previous error',
+                  message: 'Error updating txn info with customer not found error',
                   type: 'Mongo DB error',
                   vendor: 'Ucomm Backend',
                   category: 'generic_error'
@@ -95,6 +88,21 @@ const getFdCustId = (context, body) => {
 };
 
 const salesTransaction = (context, body) => {
+  function uniqueNumber() {
+    let date = Date.now();
+
+    // If created at same millisecond as previous
+    if (date <= uniqueNumber.previous) {
+      date = ++uniqueNumber.previous;
+    } else {
+      uniqueNumber.previous = date;
+    }
+    return date;
+  };
+  const clientReqId = uniqueNumber();
+  context.log('salesTransaction log - client reqid for this txn is: ', clientReqId);
+  uniqueNumber.previous = 0;
+
   // Request Headers
   const time = new Date().getTime();
   let rawSignature = `${key}:${time}`;
@@ -124,9 +132,9 @@ const salesTransaction = (context, body) => {
   let requestBody = {
     fdCustomerId: body.fdCustomerId,
     sale: {
-      orderId: '1234',
+      orderId: body.orderId,
       merchantId: body.merchantId,
-      requestedAmount: '125.00',
+      requestedAmount: body.transactionAmount,
       currencyCode: {
         number: 840
       },
@@ -149,8 +157,8 @@ const salesTransaction = (context, body) => {
       'Content-Type': 'application/json',
       'Api-Key': key,
       'Authorization': `HMAC ${authorization}`,
-      'Timestamp': time
-      //'Client-Request-Id': '1234554'
+      'Timestamp': time,
+      'Client-Request-Id': clientReqId
     }
   };
   axios.post(url, fdRequestBody, configData)
@@ -169,10 +177,11 @@ const salesTransaction = (context, body) => {
           const updates = {
             fdTransactionId: outputBody.fdSaleId,
             paymentStatus: outputBody.status,
-            txnAmount: outputBody.approvedAmount,
-            paymentSource: body.paymentSource
+            transactionAmount: outputBody.approvedAmount,
+            approvalNumber: outputBody.hostExtraInfo[0].value,
+            transactionCompleteAt: new Date()
           };
-          Transaction.findOneAndUpdate({ txnId: body.txnId }, updates, { new: true })
+          Transaction.findOneAndUpdate({ orderId: body.orderId }, updates, { new: true })
             .then(res => {
               context.done();
             }).catch(err => {
@@ -246,32 +255,26 @@ const salesTransaction = (context, body) => {
 };
 
 const createTxn = (context, body) => {
-  const config = {
-    headers: { 'x-functions-key': process.env.X_FUNCTIONS_KEY }
-  };
-  const sequenceName = 'orderId';
-  const increementCounterUrl = `${baseUrl}/api/getNextCounterValue/${sequenceName}`;
-  axios.get(increementCounterUrl, config)
-    .then(response => {
-      context.log('salesTransaction log - txnId is ', response.data.sequenceValue);
-      body.txnId = response.data.sequenceValue;
-      body.source = 'SNG';
-      body.transactionCat = 'SALES'
-      new Transaction(body)
-        .save()
-        .then(newTxn => {
-          context.log('salesTransaction log - new txn docuemnt is ', newTxn);
-          getFdCustId(context, body);
-        }).catch(err => {
-          context.log('salesTransaction log - error creating new txn docuemnt ', err);
-          context.done();
-        });
-    }).catch(error => {
+  context.log('salesTransaction log - input txn is ', body);
+  body.transactionStatus = "SUCCESS";
+  body.transactionCat = 'PURCHASE';
+  // change this and make it dynamic once the store information is integrated on the front end and correct store info cna be passed
+  body.divisionPrefix = 'NCA';
+  const date = new Date();
+  body.transactionStartAt = date;
+
+  new Transaction(body)
+    .save()
+    .then(newTxn => {
+      context.log('salesTransaction log - new txn docuemnt is ', newTxn);
+      getFdCustId(context, newTxn);
+    }).catch(err => {
+      context.log('salesTransaction log - error creating new txn docuemnt ', err);
       const outputBody = {
         ack: '1',
         errors: [{
           code: '50000',
-          message: 'Error generating new order Id sequence',
+          message: 'Error writing new txn document in Azure DB',
           type: 'Backend error',
           category: 'generic_error',
           vendor: 'Ucomm Backend'
@@ -281,7 +284,7 @@ const createTxn = (context, body) => {
         status: 200,
         body: outputBody
       };
-      context.log('salesTransaction log - error getting next value in sequence ', context.res);
+      context.done();
     });
 };
 

@@ -5,9 +5,9 @@
             "type": "httpTrigger",
             "direction": "in",
             "name": "req",
-            "route": "stations",
+            "route": "updateotftxn",
             "methods": [
-                "put"
+                "post"
             ]
         },
         {

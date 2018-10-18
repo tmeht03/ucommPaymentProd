@@ -220,15 +220,7 @@ module.exports = (context, req) => {
   }
   context.log('deleteAccount log- req.body', req.body);
 
-  if (req.headers.swy_sso_token) {
-    if (process.env.SSO_VALIDATION) {
-      validateSwySsoToken(context, req, findFdCustId.bind(null, context, req.body));
-    } else {
-      findFdCustId(context, req.body);
-    }
-  } else if (process.env.OKTA_VALIDATION) {
-    validateAccessToken(context, req, findFdCustId.bind(null, context, req.body));
-  } else {
-    findFdCustId(context, req.body);
-  }
+  context.log('Input: ', req.body);
+  //validateSwySsoToken(context, req, findFdCustId.bind(null, context, req.body));
+  findFdCustId(context, req.body);
 };

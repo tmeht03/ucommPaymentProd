@@ -105,7 +105,7 @@ const createCustomerAPI = (context, GUID) => {
       if (error.response && error.response.status && error.response.status === 409) {
         // Customer already exists in First Data
         context.res = {
-          status: 200,
+          status: 400,
           body: 'Customer already exists in First Data. Customer mapping not present in OTF Cosmos DB'
         };
         context.log('createFdCustomer log- response', JSON.stringify(context.res));

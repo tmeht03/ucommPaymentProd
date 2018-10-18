@@ -1,11 +1,9 @@
 'use strict';
 require('../config/db');
 const CustomerId = require('../models/CustomerId');
-const hostName = require('../middleware/hostName');
-const host = hostName();
+const host = process.env.WEBSITE_HOSTNAME;
 const baseUrl = host.includes('localhost') ? `http://${host}` : `https://${host}`;
 const validateSwySsoToken = require('../middleware/validateSwySsoToken');
-const validateAccessToken = require('../middleware/validateAccessToken');
 const CryptoJS = require('crypto-js');
 const axios = require('axios');
 const key = process.env.FD_KEY;
@@ -81,15 +79,15 @@ const updateAccount = (context, fdCustomerId, body) => {
 
   // Make call to update account to FirstData
 
-  const url = `https://${fdBaseUrl}/ucom/v1/customers/${fdCustomerId}/accounts/${body.fdAccountId}`;
-  const configData = {
-    headers: {
-      'Content-Type': 'application/json',
-      'Api-Key': key,
-      'Authorization': `HMAC ${authorization}`,
-      'Timestamp': time
+  const url = `https://${fdBaseUrl}/ucom/v1/customers/${fdCustomerId}/accounts/${body.fdAccountId}`,
+    configData = {
+      headers: {
+        'Content-Type': 'application/json',
+        'Api-Key': key,
+        'Authorization': `HMAC ${authorization}`,
+        'Timestamp': time
+      }
     }
-  };
 
   axios.post(url, updateAccountBody, configData)
     .then(response => {
@@ -142,17 +140,8 @@ module.exports = (context, req) => {
     context.done();
     return;
   }
-  context.log('updateAccount log- req.body', req.body);
 
-  if (req.headers.swy_sso_token) {
-    if (process.env.SSO_VALIDATION) {
-      validateSwySsoToken(context, req, findFdCustId.bind(null, context, req.body));
-    } else {
-      findFdCustId(context, req.body);
-    }
-  } else if (process.env.OKTA_VALIDATION) {
-    validateAccessToken(context, req, findFdCustId.bind(null, context, req.body));
-  } else {
-    findFdCustId(context, req.body);
-  }
+  context.log('Input: ', req.body);
+  findFdCustId(context, req.body);
+  //validateSwySsoToken(context, req, findFdCustId.bind(null, context, req.body));
 };

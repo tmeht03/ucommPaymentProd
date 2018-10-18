@@ -2,10 +2,9 @@
 require('../config/db');
 const axios = require('axios');
 const CryptoJS = require('crypto-js');
-const Customer = require('../models/CustomerId');
 const hostName = require('../middleware/hostName');
 const host = hostName();
-const baseUrl = host.includes('localhost') ? `http://${host}` : `https://${host}`;
+const baseUrl = host.includes('0.0.0.0') ? `http://${host}` : `https://${host}`;
 const validateSwySsoToken = require('../middleware/validateSwySsoToken');
 const validateAccessToken = require('../middleware/validateAccessToken');
 const key = process.env.FD_KEY;
@@ -215,15 +214,12 @@ module.exports = (context, req) => {
   }
   context.log('fdGetToken log- req.body', req.body);
 
-  if (req.headers.swy_sso_token) {
-    if (process.env.SSO_VALIDATION) {
-      validateSwySsoToken(context, req, createCustomer.bind(null, context, req.body));
-    } else {
-      createCustomer(context, req.body);
-    }
-  } else if (process.env.OKTA_VALIDATION) {
+  if (process.env.OKTA_VALIDATION) {
     validateAccessToken(context, req, createCustomer.bind(null, context, req.body));
+  } else if (process.env.SSO_VALIDATION) {
+    validateSwySsoToken(context, req, createCustomer.bind(null, context, req.body));
   } else {
+    // Ignore SSO token
     createCustomer(context, req.body);
   }
 };

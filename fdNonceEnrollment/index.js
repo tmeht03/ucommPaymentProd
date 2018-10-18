@@ -280,16 +280,12 @@ module.exports = (context, req) => {
   }
   context.log('fdNonceEnrollment log- req.body', req.body);
 
-  // Validate SSO token if sent, otherwise do not
-  if (req.headers.swy_sso_token) {
-    if (process.env.SSO_VALIDATION) {
-      validateSwySsoToken(context, req, compareTime.bind(null, context, req.body));
-    } else {
-      compareTime(context, req.body);
-    }
-  } else if (process.env.OKTA_VALIDATION) {
+  if (process.env.OKTA_VALIDATION) {
     validateAccessToken(context, req, compareTime.bind(null, context, req.body));
+  } else if (process.env.SSO_VALIDATION) {
+    validateSwySsoToken(context, req, compareTime.bind(null, context, req.body));
   } else {
+    // Ignore SSO token
     compareTime(context, req.body);
   }
 };
