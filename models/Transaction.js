@@ -164,7 +164,7 @@ const transactionSchema = mongoose.Schema({
         required: false
     },
     'transactionStartAt': {
-        type: Date,
+        type: String,
         required: false
     },
     'transactionCompleteAt': {
