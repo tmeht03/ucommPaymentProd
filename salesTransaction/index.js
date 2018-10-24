@@ -261,6 +261,7 @@ const createTxn = (context, body) => {
   // change this and make it dynamic once the store information is integrated on the front end and correct store info cna be passed
   body.divisionPrefix = 'NCA';
   const date = new Date();
+  context.log('local timezone is ',date.getTimezoneOffset());
   body.transactionStartAt = date;
 
   new Transaction(body)

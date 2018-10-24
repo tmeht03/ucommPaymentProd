@@ -30,7 +30,7 @@ const updateTxn = (context, body) => {
             fuelVolume: body.fuelVolume,
             originalUnitPrice: body.originalUnitPrice,
             discountedUnitPrice: body.discountedUnitPrice,
-            transactionCompleteAt:body.fuelingCompleteAt,
+            transactionCompleteAt:new Date(body.fuelingCompleteAt),
             fuelingCompleteAt: body.fuelingCompleteAt,
             transactionCat: body.transactionCat,
             transactionStatus: body.infonetStatus,

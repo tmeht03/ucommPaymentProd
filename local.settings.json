@@ -7,9 +7,10 @@
       "FD_KEY": "RBTnQcmj3ttwAQZpxLOVGEki5mDRU1es",
       "FD_SECRET": "pX3yGenRGNDSUWTl",
       "FD_BASEURL": "api-int.payeezy.com",
-      "FUNCTIONS_WORKER_RUNTIME": "node"
+      "FUNCTIONS_WORKER_RUNTIME": "node",
+      "X_FUNCTIONS_KEY": "rSytajXaTEyJQJNdBodLWA3bYHY9oZoKVODfZI9LLv8gwakqftHsOA=="
     },
     "Host": {
-      "LocalHttpPort": 7071
+      "LocalHttpPort": 7099
     }
   }
