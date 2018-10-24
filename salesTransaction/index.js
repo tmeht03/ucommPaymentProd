@@ -269,7 +269,7 @@ const createTxn = (context, body) => {
   Transaction.findOne({orderId : body.orderId})
   .then(res =>{
     context.log('salesTransaction log - found txn is ',res);
-    if(res && res.paymentStatus && res.paymentStatus === 'SUCCESS'){
+    if(res && res.paymentStatus && (res.paymentStatus === 'SUCCESS' || res.paymentStatus === 'APPROVED')){
       context.log('Payment has already been processed');
       const outputBody = {
         ack: '1',
