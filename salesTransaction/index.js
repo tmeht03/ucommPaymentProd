@@ -19,6 +19,7 @@ const getFdCustId = (context, body) => {
       if (customer === null) {
         context.log('salesTransaction log- Customer not present in Azure DB');
         const updates = {
+          paymentStatus: 'FAILED',
           fdTransactionId: 'DB - fdCustomer not present'
         };
         Transaction.findOneAndUpdate({ orderId: body.orderId }, updates, { new: true })
@@ -176,7 +177,7 @@ const salesTransaction = (context, body) => {
           context.log('salesTransaction log- outputBody', context.res);
           const updates = {
             fdTransactionId: outputBody.fdSaleId,
-            paymentStatus: outputBody.status,
+            paymentStatus: 'SUCCESS',
             transactionAmount: outputBody.approvedAmount,
             approvalNumber: outputBody.hostExtraInfo[0].value,
             transactionCompleteAt: new Date()
@@ -211,9 +212,10 @@ const salesTransaction = (context, body) => {
         }
         context.res = {
           status: 200,
-          body: error
+          body: outputBody
         };
         const updates = {
+          paymentStatus: 'FAILED',
           fdTransactionId: '5000 - Fd Response parse error'
         };
         // context.done();
@@ -261,32 +263,77 @@ const createTxn = (context, body) => {
   // change this and make it dynamic once the store information is integrated on the front end and correct store info cna be passed
   body.divisionPrefix = 'NCA';
   const date = new Date();
-  context.log('local timezone is ',date.getTimezoneOffset());
   body.transactionStartAt = date;
 
-  new Transaction(body)
-    .save()
-    .then(newTxn => {
-      context.log('salesTransaction log - new txn docuemnt is ', newTxn);
-      getFdCustId(context, newTxn);
-    }).catch(err => {
-      context.log('salesTransaction log - error creating new txn docuemnt ', err);
+
+  Transaction.findOne({orderId : body.orderId})
+  .then(res =>{
+    context.log('salesTransaction log - found txn is ',res);
+    if(res && res.paymentStatus && res.paymentStatus === 'SUCCESS'){
+      context.log('Payment has already been processed');
       const outputBody = {
         ack: '1',
         errors: [{
-          code: '50000',
-          message: 'Error writing new txn document in Azure DB',
+          code: '6000',
+          message: 'Payment has already been processed',
           type: 'Backend error',
-          category: 'generic_error',
+          category: 'duplicate_payment',
           vendor: 'Ucomm Backend'
         }]
       }
       context.res = {
         status: 200,
         body: outputBody
-      };
+      }
       context.done();
-    });
+    }else if(res && res.paymentStatus === 'FAILED'){
+      getFdCustId(context, res);
+    }else if(!res){
+      new Transaction(body)
+      .save()
+      .then(newTxn => {
+        context.log('salesTransaction log - new txn docuemnt is ', newTxn);
+        getFdCustId(context, newTxn);
+      }).catch(err => {
+        context.log('salesTransaction log - error creating new txn docuemnt ', err);
+        const outputBody = {
+          ack: '1',
+          errors: [{
+            code: '50000',
+            message: 'Error writing new txn document in Azure DB',
+            type: 'Backend error',
+            category: 'generic_error',
+            vendor: 'Ucomm Backend'
+          }]
+        }
+        context.res = {
+          status: 200,
+          body: outputBody
+        };
+        context.done();
+      });
+    }else if(res && !res.paymentStatus){
+      getFdCustId(context, res);
+    }
+  }).catch(err => {
+    context.log('salesTransaction log - error finding txn ',err);
+    const outputBody = {
+      ack: '1',
+      errors: [{
+        code: '50000',
+        message: 'Azure backend error',
+        type: 'Backend error',
+        category: 'generic_error',
+        vendor: 'Ucomm Backend'
+      }]
+    }
+    context.res = {
+      status: 200,
+      body: outputBody
+    };
+    context.done();
+  })
+ 
 };
 
 module.exports = (context, req) => {
