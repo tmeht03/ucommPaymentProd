@@ -8,7 +8,9 @@
       "FD_SECRET": "pX3yGenRGNDSUWTl",
       "FD_BASEURL": "api-int.payeezy.com",
       "FUNCTIONS_WORKER_RUNTIME": "node",
-      "X_FUNCTIONS_KEY": "rSytajXaTEyJQJNdBodLWA3bYHY9oZoKVODfZI9LLv8gwakqftHsOA=="
+      "X_FUNCTIONS_KEY": "rSytajXaTEyJQJNdBodLWA3bYHY9oZoKVODfZI9LLv8gwakqftHsOA==",
+      "SNG_BASEURL":"scanandgo-dev.azure-api.net",
+      "SNG_OCP_APIM_SUBSCRIPTION_KEY": "9180fc868807458f81d7f97e912f250d"
     },
     "Host": {
       "LocalHttpPort": 7099

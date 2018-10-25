@@ -184,11 +184,26 @@ const salesTransaction = (context, body) => {
           };
           Transaction.findOneAndUpdate({ orderId: body.orderId }, updates, { new: true })
             .then(res => {
-              context.done();
             }).catch(err => {
-              context.done();
             });
-          //context.done();
+
+             const sngurl = `https://${process.env.SNG_BASEURL}/clearCart`;
+          const sngconfigData = {
+            headers: {
+              'Ocp-Apim-Subscription-Key': process.env.SNG_OCP_APIM_SUBSCRIPTION_KEY,
+              'guid': body.GUID
+            }
+          };
+          //clear cart when successfull payment has been done
+          axios.delete(sngurl,sngconfigData)
+          .then(res =>{
+            context.log('salesTransaction log- clear cart output ', res);
+          })
+          .catch(err =>{
+            context.log('salesTransaction log- error on clear cart ', err);
+          });
+
+          context.done();
         } else {
           const outputBody = JSON.parse(JSON.stringify(res.data));
           outputBody.ack = '0';
