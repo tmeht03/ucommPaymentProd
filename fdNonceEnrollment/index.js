@@ -82,9 +82,7 @@ const nonceEnrollment = (context, body, updateAddCardDetails, _id) => {
           Customer.update({ "fdCustomerId": fdCustomerId }, { "defaultCard": response.data.fdAccountId, "addCardTime": updateAddCardDetails.addCardTime, "cardCounter": updateAddCardDetails.cardCounter }, { new: true })
             .then(res => {
               const outputBody = {
-                data: {
-                  fdAccountId: response.data.fdAccountId
-                },
+                data: response.data,
                 ack: '0'
               }
               context.res = {
