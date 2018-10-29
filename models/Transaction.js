@@ -169,7 +169,7 @@ const transactionSchema = mongoose.Schema({
     },
     'transactionCompleteAt': {
         type: String,
-        required: false
+        required: true
     },
     /*
      * transactionCat
@@ -192,6 +192,10 @@ const transactionSchema = mongoose.Schema({
         required: false
     },
     'paymentStatus': {
+        type: String,
+        required: false
+    },
+    'paymentCompleteAt':{
         type: String,
         required: false
     }

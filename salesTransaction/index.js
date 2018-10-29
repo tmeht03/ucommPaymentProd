@@ -180,7 +180,7 @@ const salesTransaction = (context, body) => {
             paymentStatus: 'SUCCESS',
             transactionAmount: outputBody.approvedAmount,
             approvalNumber: outputBody.hostExtraInfo[0].value,
-            transactionCompleteAt: new Date()
+            paymentCompleteAt: new Date(outputBody.transactionDateTime)
           };
           Transaction.findOneAndUpdate({ orderId: body.orderId }, updates, { new: true })
             .then(res => {
@@ -277,9 +277,10 @@ const createTxn = (context, body) => {
   body.transactionCat = 'PURCHASE';
   // change this and make it dynamic once the store information is integrated on the front end and correct store info cna be passed
   body.divisionPrefix = 'NCA';
-  const date = new Date();
-  body.transactionStartAt = date;
-
+  if(body.vposTransactionDate){
+  body.transactionStartAt = new Date(body.vposTransactionDate);
+  body.transactionCompleteAt = new Date(body.vposTransactionDate);
+  }
 
   Transaction.findOne({orderId : body.orderId})
   .then(res =>{
